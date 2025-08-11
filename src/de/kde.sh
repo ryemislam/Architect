@@ -24,6 +24,7 @@ function install_kde() {
         kcalc
         plasma-systemmonitor
         kwalletmanager
+        flatpak
     "
 
     # Call the install_lst function to install the listed applications
