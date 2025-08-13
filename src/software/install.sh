@@ -21,25 +21,28 @@ selected_packages=""
 # -----------------------------------------------------------------------------
 function set_software_list() {
     desktop_list=(
-        ["Discord"]="discord"
-        ["Telegram"]="telegram-desktop"
-        ["Spotify"]="spotify"
-        ["LibreOffice en"]="libreoffice-fresh"
-        ["LibreOffice fr"]="libreoffice-fresh libreoffice-fresh-fr"
-        ["OnlyOffice"]="onlyoffice-bin"
-        ["Audacity"]="audacity"
-        ["Kazam"]="kazam"
-        ["Visual Studio Code"]="visual-studio-code-bin"
-        ["Visual Studio Code Open Source"]="code"
-        ["Virtualbox"]="virtualbox virtualbox-host-dkms virtualbox-guest-iso"
-        ["Virtmanager"]="qemu-full virt-manager virt-viewer dnsmasq vde2 bridge-utils openbsd-netcat dmidecode libguestfs"
-        ["CrossOver"]="crossover"
+        ["Deskflow"]="deskflow"
+        ["Bitwarden"]="bitwarden"
+        ["Obsidian"]="obsidian"
+        ["Syncthing"]="syncthing"
+        ["Lact"]="lact"
+        ["Resources"]="resources"
+        ["Brisk"]="brisk"
+        ["Rustdesk"]="rusdesk-bin"
+        ["Scrcpy"]="scrcpy"
+        ["Virtmanager"]="qemu-full virt-manager virt-viewer dnsmasq vde2 bridge-utils openbsd-netcat dmidecode libguestfs ebtables iptables-nft nftables ovmf swtpm"
+        ["Albert"]="albert"
+        ["Cooler Control"]="coolercontrol"
+        ["Czkawka"]="czkawka-gui-bin"
+        ["Mission Center"]="mission-center"
+        ["Krusader"]="krusader"
+        ["Octopi"]="octopi"
     )
 
     system_list=(
+        ["Arch Update"]="arch-update vim"
         ["Open RGB"]="openrgb i2c-tools"
         ["Open Razer"]="openrazer-daemon libnotify polychromatic"
-        ["Arch Update"]="arch-update vim"
     )
 
     picture_list=(
@@ -47,33 +50,32 @@ function set_software_list() {
         ["Krita"]="krita"
         ["Inkscape"]="inkscape"
         ["Blender"]="blender"
+        ["Darktable"]="darktable"
+        ["Rawtherapee"]="rawtherapee"
     )
 
     video_list=(
-        ["Kdenlive"]="kdenlive"
         ["OBS Studio"]="obs-studio"
-        ["VLC"]="vlc"
         ["MPV"]="mpv"
+        ["VLC"]="vlc"
+        ["Kdenlive"]="kdenlive"
     )
 
     browser_list=(
-        ["Firefox en"]="firefox"
-        ["Firefox fr"]="firefox firefox-i18n-fr"
+        ["Firefox"]="firefox"
+        ["Vivaldi"]="vivaldi vivaldi-ffmpeg-codecs"
         ["Brave"]="brave-bin"
         ["Chromium"]="chromium"
-        ["Vivaldi"]="vivaldi vivaldi-ffmpeg-codecs"
         ["Google Chrome"]="google-chrome"
-        ["Microsoft Edge"]="microsoft-edge-stable-bin"
     )
 
     gaming_list=(
         ["Steam"]="steam"
-        ["Lutris"]="lutris wine-staging"
-        ["Heroic Games Launcher (Epic Games, GOG, etc.)"]="heroic-games-launcher-bin"
-        ["Prism Launcher (Minecraft)"]="prismlauncher-qt5 jdk8-openjdk"
-        ["ProtonUp QT"]="protonup-qt"
         ["Goverlay"]="goverlay lib32-mangohud"
         ["Gamemode"]="gamemode lib32-gamemode"
+        ["Heroic Games Launcher"]="heroic-games-launcher-bin"
+        ["Lutris"]="lutris wine-staging"
+        ["ProtonUp QT"]="protonup-qt"
     )
 }
 
@@ -104,9 +106,9 @@ function select_and_install() {
                 selected_packages+=" ${software_list[$software]} "
             done
             break
-        elif [[ $item =~ ^[0-9]+$ ]]; then
+        elif [[ $item =~ ^[0-16]+$ ]]; then
             selected_packages+=" ${software_list[${options[$item - 1]}]} "
-        elif [[ $item =~ ^[0-9]+-[0-9]+$ ]]; then
+        elif [[ $item =~ ^[0-16]+-[0-16]+$ ]]; then
             IFS='-' read -ra range <<<"$item"
             for ((j = ${range[0]}; j <= ${range[1]}; j++)); do
                 selected_packages+=" ${software_list[${options[$j - 1]}]} "
@@ -149,6 +151,15 @@ function install_software() {
         exec_log "arch-update --tray --enable" "$(eval_gettext "Enable arch-update tray")"
     fi
 
+    if [[ "${packages}" =~ "syncthing" ]]; then
+        exec_log "systemctl --user enable syncthing.service" "$(eval_gettext "Enable syncthing.service")"
+        exec_log "systemctl --user start syncthing.service" "$(eval_gettext "Start syncthing.service")"
+    fi
+
+    if [[ "${packages}" =~ "lact" ]]; then
+        exec_log "sudo systemctl enable --now lactd" "$(eval_gettext "Enable lactd")"
+    fi
+    
     # Open Razer
     if [[ "${packages}" =~ "openrazer-daemon" ]]; then
         exec_log "sudo usermod -aG plugdev $(whoami)" "$(eval_gettext "Add the current user to the plugdev group")"
@@ -165,6 +176,9 @@ function install_software() {
         exec_log "sudo usermod -aG libvirt $(whoami)" "$(eval_gettext "Add the current user to the libvirt group")"
         exec_log "sudo usermod -aG kvm $(whoami)" "$(eval_gettext "Add the current user to the kvm group")"
         exec_log "sudo systemctl enable --now libvirtd" "$(eval_gettext "Enable libvirtd")"
+        exec_log "sudo systemctl start libvirtd" "$(eval_gettext "Start libvirtd")"
+        exec_log "sudo virsh net-autostart default" "$(eval_gettext "Start Virsh internal network automatically")"
+        exec_log "sudo virsh net-start default" "$(eval_gettext "Start Virsh internal network")"
 
         # Configure libvirtd socket (permissions)
         sudo sed -i 's/#unix_sock_group = "libvirt"/unix_sock_group = "libvirt"/' /etc/libvirt/libvirtd.conf
@@ -289,6 +303,25 @@ disable_splitlock=1
             sudo ufw allow 4379/udp
             sudo ufw allow 4380/udp
             sudo ufw allow 27014:27030/udp
+
+            # Syncthing
+            sudo ufw allow 22000/udp
+            sudo ufw allow 21027/udp
+            sudo ufw allow 8384/tcp
+            sudo ufw allow syncthing/udp
+            sudo ufw allow syncthing-gui/udp
+
+            # Sunshine
+            # TCP ports
+            sudo ufw allow 47984/tcp
+            sudo ufw allow 47989/tcp
+            sudo ufw allow 48010/tcp
+            # UDP ports
+            sudo ufw allow 47998/udp
+            sudo ufw allow 47999/udp
+            sudo ufw allow 48000/udp
+            sudo ufw allow 48002/udp
+            sudo ufw allow 48010/udp
 
             sudo ufw reload &> /dev/null
         fi
