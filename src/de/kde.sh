@@ -25,6 +25,9 @@ function install_kde() {
         plasma-systemmonitor
         kwalletmanager
         flatpak
+        kdeconnect
+        kdiskmark
+        elisa
     "
 
     # Call the install_lst function to install the listed applications
