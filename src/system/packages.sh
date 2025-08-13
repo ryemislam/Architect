@@ -38,6 +38,10 @@ function usefull_package() {
         ffmpegthumbs
         man-db
         man-pages
+        kitty
+        btop
+        xfsprogs
+        iperf3
     "
 
     if [[ ${BTRFS} == true ]]; then
