@@ -21,6 +21,7 @@ function printer() {
             foomatic-db-nonfree-ppds
             gutenprint
             foomatic-db-gutenprint-ppds
+            nss-mdns
         "
 
         if ask_question "$(eval_gettext "Do you want to use an EPSON printer?")"; then
